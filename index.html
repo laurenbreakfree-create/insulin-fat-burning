@@ -52,6 +52,7 @@
   #stress { background: linear-gradient(90deg,#2dd4bf,#ef4444); }
   #estrogen { background: linear-gradient(90deg,#ef4444,#2dd4bf,#ef4444); }
   #eating { background: linear-gradient(90deg,#2dd4bf,#ef4444); }
+  #wear { background: linear-gradient(90deg,#2dd4bf,#ef4444); }
   .endLabels { display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin-top: 5px; }
 
   .divider { height: 1px; background: #262b35; margin: 26px 0; }
@@ -64,6 +65,27 @@
   .meter { height: 22px; background: #11141a; border:1px solid #262b35; border-radius: 8px; overflow: hidden; }
   .meterFill { height: 100%; transition: width .25s ease, background .25s ease; }
   .arrowNote { text-align: center; color: #6b7280; font-size: 18px; margin: 10px 0; }
+
+  .cycleBox { margin-bottom: 22px; background:#11141a; border:1px solid #262b35; border-radius:12px; padding:16px; transition: border-color .25s; }
+  .cycleHead { display:flex; justify-content:space-between; align-items:baseline; margin-bottom:10px; }
+  .cycleHead .t { font-size:14px; font-weight:700; }
+  .cycleHead .v { font-size:13px; font-weight:700; }
+  .cycleText { font-size:13px; line-height:1.5; color:#aeb4c0; margin-top:10px; }
+  .cycleText b { color:#fff; }
+
+  .windowWrap { margin-top:14px; text-align:center; }
+  .window {
+    position:relative; width:120px; height:92px; margin:0 auto;
+    border:5px solid #5a6270; border-radius:4px; overflow:hidden;
+    background:linear-gradient(#bfe6ff,#eaf6ff);
+    transition:border-color .25s;
+  }
+  .mullionV { position:absolute; top:0; bottom:0; left:50%; width:4px; margin-left:-2px; background:#5a6270; z-index:1; }
+  .mullionH { position:absolute; left:0; right:0; top:50%; height:4px; margin-top:-2px; background:#5a6270; z-index:1; }
+  .shutter { position:absolute; top:0; bottom:0; width:0; background:#23272f; z-index:2; transition:width .25s ease; }
+  .shutter.left { left:0; border-right:2px solid #3a3f49; }
+  .shutter.right { right:0; border-left:2px solid #3a3f49; }
+  .windowLabel { margin-top:8px; font-size:12px; font-weight:600; transition:color .25s; }
 
   .section { margin-bottom: 22px; }
   .mix { display: flex; height: 44px; border-radius: 10px; overflow: hidden; border: 1px solid #262b35; }
@@ -79,6 +101,8 @@
 
   .footer { margin-top:24px; font-size:13px; color:#6b7280; line-height:1.55; }
   .footer b { color:#aeb4c0; }
+
+  .attrib { margin-top:18px; padding-top:14px; border-top:1px solid #262b35; font-size:10px; color:#5a606b; line-height:1.4; text-align:center; }
 </style>
 </head>
 <body>
@@ -131,6 +155,27 @@
       <div class="meter"><div class="meterFill" id="insulinFill"></div></div>
     </div>
 
+    <div class="cycleBox" id="cycleBox">
+      <div class="cycleHead">
+        <span class="t">🔁 Insulin receptors &mdash; drag me</span>
+        <span class="v" id="wearV"></span>
+      </div>
+      <input type="range" min="0" max="100" value="55" id="wear">
+      <div class="endLabels"><span>Open &amp; healthy</span><span>Shut / worn out</span></div>
+
+      <div class="windowWrap">
+        <div class="window" id="windowEl">
+          <div class="mullionV"></div>
+          <div class="mullionH"></div>
+          <div class="shutter left" id="shutterL"></div>
+          <div class="shutter right" id="shutterR"></div>
+        </div>
+        <div class="windowLabel" id="windowLabel"></div>
+      </div>
+
+      <div class="cycleText" id="cycleText"></div>
+    </div>
+
     <div class="arrowNote">↓ which sets your fat-burning ↓</div>
 
     <div class="section">
@@ -154,6 +199,8 @@
     <div class="footer">
       <b>The takeaway:</b> stress, estrogen swings, and how you eat all push insulin up. When insulin stays high all day, the vault stays locked &mdash; so you can be eating less and <b>still</b> not burning your fat. Calm any of the three levers and insulin drops, the vault opens, and fat-burning turns back on.
     </div>
+
+    <div class="attrib">Based on And/Life&rsquo;s proprietary fat-burning concept. Shared as a learning aid &mdash; not for sale or commercial use.</div>
   </div>
 
 <script>
@@ -167,6 +214,14 @@
 
   const insulinV = document.getElementById('insulinV');
   const insulinFill = document.getElementById('insulinFill');
+  const wear = document.getElementById('wear');
+  const wearV = document.getElementById('wearV');
+  const cycleBox = document.getElementById('cycleBox');
+  const cycleText = document.getElementById('cycleText');
+  const windowEl = document.getElementById('windowEl');
+  const shutterL = document.getElementById('shutterL');
+  const shutterR = document.getElementById('shutterR');
+  const windowLabel = document.getElementById('windowLabel');
   const sugarBar = document.getElementById('sugarBar');
   const fatBar = document.getElementById('fatBar');
   const lock = document.getElementById('lock');
@@ -193,9 +248,14 @@
     // estrogen: center (50) is best; both ends are bad -> deviation
     const eDev = Math.abs(e - 50) * 2; // 0..100
 
-    // resulting insulin
-    let insulin = 12 + s * 0.35 + f * 0.35 + eDev * 0.30;
-    insulin = Math.max(0, Math.min(100, Math.round(insulin)));
+    const w = +wear.value; // how worn the receptors are (you drag this)
+
+    // insulin the lifestyle levers ask for
+    const baseInsulin = 12 + s * 0.35 + f * 0.35 + eDev * 0.30;
+
+    // the trap: worn receptors don't listen, so the body needs EVEN MORE
+    // insulin to do the same job -> the real insulin level is amplified
+    let insulin = Math.max(0, Math.min(100, Math.round(baseInsulin + w * 0.30)));
 
     // lever state labels
     stressState.textContent = word(s, 'Calm', 'Building', 'High');
@@ -210,6 +270,26 @@
     insulinFill.style.background = colorFor(insulin);
     insulinV.textContent = word(insulin, 'Low', 'Medium', 'High') + ' (' + insulin + ')';
     insulinV.style.color = colorFor(insulin);
+
+    // receptor wear label + the vicious-cycle note
+    wearV.textContent = word(w, 'Open', 'Half-shut', 'Shut');
+    wearV.style.color = colorFor(w);
+    cycleBox.style.borderColor = w >= 60 ? '#ef4444' : (w >= 33 ? '#fbbf24' : '#262b35');
+
+    // the window: worn receptors = shutters close over the glass
+    const close = (w / 100) * 50; // each shutter covers up to half
+    shutterL.style.width = close + '%';
+    shutterR.style.width = close + '%';
+    windowEl.style.borderColor = colorFor(w);
+    windowLabel.style.color = colorFor(w);
+    windowLabel.textContent = w >= 60
+      ? 'Shut — insulin can\'t get in, so the body pumps out more'
+      : (w >= 33 ? 'Closing — insulin struggling to get in' : 'Open — insulin gets in easily, little is needed');
+    if (w >= 33) {
+      cycleText.innerHTML = 'Drag it and watch the insulin meter jump. Worn receptors stop listening &mdash; so your body pumps out <b>even more</b> insulin for the same job. And high insulin is what <b>wears them out in the first place</b>: more insulin &rarr; more wear &rarr; more insulin. <b>That\'s why it snowballs over time.</b>';
+    } else {
+      cycleText.innerHTML = 'Receptors <b>healthy and listening</b> &mdash; it takes only a little insulin to do the job, so nothing snowballs. Years of high insulin are what slide this toward "worn out."';
+    }
 
     // fuel mix
     const fatPct = Math.round(85 - (insulin / 100) * 75);
@@ -241,7 +321,7 @@
     }
   }
 
-  [stress, estrogen, eating].forEach(el => el.addEventListener('input', update));
+  [stress, estrogen, eating, wear].forEach(el => el.addEventListener('input', update));
   update();
 </script>
 </body>
