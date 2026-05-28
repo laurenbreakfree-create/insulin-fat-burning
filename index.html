@@ -1,0 +1,248 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>What turns your fat-burning on and off</title>
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    background: #0f1115;
+    color: #e7e9ee;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+  }
+  .card {
+    width: 100%;
+    max-width: 640px;
+    background: #181b22;
+    border: 1px solid #262b35;
+    border-radius: 18px;
+    padding: 32px;
+    box-shadow: 0 20px 60px rgba(0,0,0,.4);
+  }
+  h1 { font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .sub { color: #8b92a1; font-size: 14px; margin-bottom: 26px; line-height: 1.5; }
+
+  .leversTitle, .secTitle {
+    font-size: 12px; text-transform: uppercase; letter-spacing: .6px;
+    color: #8b92a1; margin-bottom: 14px; font-weight: 600;
+  }
+
+  .lever { margin-bottom: 20px; }
+  .leverHead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .leverName { font-size: 15px; font-weight: 600; }
+  .leverName .emoji { margin-right: 6px; }
+  .leverDesc { font-size: 12px; color: #6b7280; margin-top: 2px; }
+  .leverState { font-size: 13px; font-weight: 600; }
+
+  input[type=range] {
+    -webkit-appearance: none; width: 100%; height: 8px; border-radius: 6px;
+    outline: none; cursor: pointer;
+  }
+  input[type=range]::-webkit-slider-thumb {
+    -webkit-appearance: none; width: 24px; height: 24px; border-radius: 50%;
+    background: #fff; border: 3px solid #0f1115; cursor: grab;
+    box-shadow: 0 2px 8px rgba(0,0,0,.5);
+  }
+  #stress { background: linear-gradient(90deg,#2dd4bf,#ef4444); }
+  #estrogen { background: linear-gradient(90deg,#ef4444,#2dd4bf,#ef4444); }
+  #eating { background: linear-gradient(90deg,#2dd4bf,#ef4444); }
+  .endLabels { display: flex; justify-content: space-between; font-size: 11px; color: #6b7280; margin-top: 5px; }
+
+  .divider { height: 1px; background: #262b35; margin: 26px 0; }
+
+  /* insulin result meter */
+  .insulinBox { margin-bottom: 26px; }
+  .insulinHead { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+  .insulinHead .t { font-size: 15px; font-weight: 700; }
+  .insulinHead .v { font-size: 14px; font-weight: 700; }
+  .meter { height: 22px; background: #11141a; border:1px solid #262b35; border-radius: 8px; overflow: hidden; }
+  .meterFill { height: 100%; transition: width .25s ease, background .25s ease; }
+  .arrowNote { text-align: center; color: #6b7280; font-size: 18px; margin: 10px 0; }
+
+  .section { margin-bottom: 22px; }
+  .mix { display: flex; height: 44px; border-radius: 10px; overflow: hidden; border: 1px solid #262b35; }
+  .sugar { background: #fbbf24; color: #3a2c00; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; transition: width .25s ease; }
+  .fat { background: #2dd4bf; color: #00332e; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; transition: width .25s ease; }
+
+  .vault { display:flex; align-items:center; gap:16px; background:#11141a; border:1px solid #262b35; border-radius:12px; padding:16px; transition: border-color .25s; }
+  .lock { font-size: 38px; transition: transform .25s; }
+  .vaultText { font-size: 14px; line-height: 1.45; }
+
+  .caption { background:#11141a; border-left:4px solid #2dd4bf; border-radius:8px; padding:15px 18px; font-size:15px; line-height:1.55; transition: border-color .25s; }
+  .caption b { color: #fff; }
+
+  .footer { margin-top:24px; font-size:13px; color:#6b7280; line-height:1.55; }
+  .footer b { color:#aeb4c0; }
+</style>
+</head>
+<body>
+  <div class="card">
+    <h1>What turns your fat-burning on &amp; off</h1>
+    <div class="sub">Three things in your life raise your <b style="color:#e7e9ee">insulin</b>. And insulin is the dial on fat-burning — the more insulin is out, the more your fat is locked away. Drag the three levers and watch.</div>
+
+    <div class="leversTitle">The 3 levers (the things you can change)</div>
+
+    <div class="lever">
+      <div class="leverHead">
+        <div>
+          <div class="leverName"><span class="emoji">😰</span>Stress</div>
+          <div class="leverDesc">Cortisol drips out all day &mdash; even when you don't feel it &mdash; and pulls insulin out with it.</div>
+        </div>
+        <div class="leverState" id="stressState"></div>
+      </div>
+      <input type="range" min="0" max="100" value="70" id="stress">
+      <div class="endLabels"><span>Calm</span><span>Wired all day</span></div>
+    </div>
+
+    <div class="lever">
+      <div class="leverHead">
+        <div>
+          <div class="leverName"><span class="emoji">🎢</span>Estrogen</div>
+          <div class="leverDesc">Rollercoastering or dive-bombing wrecks insulin sensitivity &mdash; so it takes more insulin to do the same job. Steady is best.</div>
+        </div>
+        <div class="leverState" id="estrogenState"></div>
+      </div>
+      <input type="range" min="0" max="100" value="82" id="estrogen">
+      <div class="endLabels"><span>Crashing low</span><span>Steady</span><span>Spiking high</span></div>
+    </div>
+
+    <div class="lever">
+      <div class="leverHead">
+        <div>
+          <div class="leverName"><span class="emoji">🍽️</span>Blood sugar &mdash; how you eat</div>
+          <div class="leverDesc">Skipping then bingeing, grazing all day, or stress-munching (chewing to calm your nerves) keeps spiking insulin.</div>
+        </div>
+        <div class="leverState" id="eatingState"></div>
+      </div>
+      <input type="range" min="0" max="100" value="65" id="eating">
+      <div class="endLabels"><span>Steady, fed properly</span><span>Skipping / grazing / munching</span></div>
+    </div>
+
+    <div class="divider"></div>
+
+    <div class="insulinBox">
+      <div class="insulinHead"><span class="t">↳ Resulting insulin</span><span class="v" id="insulinV"></span></div>
+      <div class="meter"><div class="meterFill" id="insulinFill"></div></div>
+    </div>
+
+    <div class="arrowNote">↓ which sets your fat-burning ↓</div>
+
+    <div class="section">
+      <div class="secTitle">What you're burning right now</div>
+      <div class="mix">
+        <div class="sugar" id="sugarBar">Sugar</div>
+        <div class="fat" id="fatBar">Fat</div>
+      </div>
+    </div>
+
+    <div class="section">
+      <div class="secTitle">Your stored fat</div>
+      <div class="vault" id="vault">
+        <div class="lock" id="lock">🔒</div>
+        <div class="vaultText" id="vaultText"></div>
+      </div>
+    </div>
+
+    <div class="caption" id="caption"></div>
+
+    <div class="footer">
+      <b>The takeaway:</b> stress, estrogen swings, and how you eat all push insulin up. When insulin stays high all day, the vault stays locked &mdash; so you can be eating less and <b>still</b> not burning your fat. Calm any of the three levers and insulin drops, the vault opens, and fat-burning turns back on.
+    </div>
+  </div>
+
+<script>
+  const stress = document.getElementById('stress');
+  const estrogen = document.getElementById('estrogen');
+  const eating = document.getElementById('eating');
+
+  const stressState = document.getElementById('stressState');
+  const estrogenState = document.getElementById('estrogenState');
+  const eatingState = document.getElementById('eatingState');
+
+  const insulinV = document.getElementById('insulinV');
+  const insulinFill = document.getElementById('insulinFill');
+  const sugarBar = document.getElementById('sugarBar');
+  const fatBar = document.getElementById('fatBar');
+  const lock = document.getElementById('lock');
+  const vault = document.getElementById('vault');
+  const vaultText = document.getElementById('vaultText');
+  const caption = document.getElementById('caption');
+
+  function colorFor(pct) {
+    if (pct >= 60) return '#ef4444';
+    if (pct >= 33) return '#fbbf24';
+    return '#2dd4bf';
+  }
+  function word(pct, low, mid, high) {
+    if (pct >= 60) return high;
+    if (pct >= 33) return mid;
+    return low;
+  }
+
+  function update() {
+    const s = +stress.value;
+    const e = +estrogen.value;
+    const f = +eating.value;
+
+    // estrogen: center (50) is best; both ends are bad -> deviation
+    const eDev = Math.abs(e - 50) * 2; // 0..100
+
+    // resulting insulin
+    let insulin = 12 + s * 0.35 + f * 0.35 + eDev * 0.30;
+    insulin = Math.max(0, Math.min(100, Math.round(insulin)));
+
+    // lever state labels
+    stressState.textContent = word(s, 'Calm', 'Building', 'High');
+    stressState.style.color = colorFor(s);
+    eatingState.textContent = word(f, 'Steady', 'Choppy', 'Erratic');
+    eatingState.style.color = colorFor(f);
+    estrogenState.textContent = word(eDev, 'Steady', 'Swinging', 'Dive-bombing');
+    estrogenState.style.color = colorFor(eDev);
+
+    // insulin meter
+    insulinFill.style.width = insulin + '%';
+    insulinFill.style.background = colorFor(insulin);
+    insulinV.textContent = word(insulin, 'Low', 'Medium', 'High') + ' (' + insulin + ')';
+    insulinV.style.color = colorFor(insulin);
+
+    // fuel mix
+    const fatPct = Math.round(85 - (insulin / 100) * 75);
+    const sugarPct = 100 - fatPct;
+    sugarBar.style.width = sugarPct + '%';
+    fatBar.style.width = fatPct + '%';
+    sugarBar.textContent = 'Sugar ' + sugarPct + '%';
+    fatBar.textContent = 'Fat ' + fatPct + '%';
+
+    // vault + caption
+    if (insulin >= 55) {
+      lock.textContent = '🔒'; lock.style.transform = 'scale(1)';
+      vault.style.borderColor = '#ef4444';
+      vaultText.innerHTML = '<b style="color:#fff">Vault LOCKED.</b> High insulin clamps your fat cells shut &mdash; your stored fat can\'t get out to be burned.';
+      caption.style.borderLeftColor = '#ef4444';
+      caption.innerHTML = 'Insulin is <b>high</b>, so your body burns the <b>sugar</b> from your food and locks your fat away. You could eat less and still barely touch your fat.';
+    } else if (insulin >= 33) {
+      lock.textContent = '🔓'; lock.style.transform = 'scale(1)';
+      vault.style.borderColor = '#fbbf24';
+      vaultText.innerHTML = '<b style="color:#fff">Vault half-open.</b> Insulin is easing off &mdash; some fat can start coming out.';
+      caption.style.borderLeftColor = '#fbbf24';
+      caption.innerHTML = 'Insulin is <b>coming down</b>. The mix is shifting &mdash; less sugar-burning, more of your own fat getting used.';
+    } else {
+      lock.textContent = '🔓'; lock.style.transform = 'scale(1.05)';
+      vault.style.borderColor = '#2dd4bf';
+      vaultText.innerHTML = '<b style="color:#fff">Vault OPEN.</b> Insulin is low &mdash; your fat flows out freely and your body burns it for fuel.';
+      caption.style.borderLeftColor = '#2dd4bf';
+      caption.innerHTML = 'Insulin is <b>low</b> &mdash; your body opens the vault and runs mostly on <b>your own fat</b>. This is the state you want to spend time in.';
+    }
+  }
+
+  [stress, estrogen, eating].forEach(el => el.addEventListener('input', update));
+  update();
+</script>
+</body>
+</html>
