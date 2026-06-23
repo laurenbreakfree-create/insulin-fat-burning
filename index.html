@@ -93,6 +93,10 @@
   .sugar { background: #fbbf24; color: #3a2c00; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; transition: width .25s ease; }
   .fat { background: #2dd4bf; color: #00332e; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:13px; transition: width .25s ease; }
 
+  .flbar { position:relative; height:48px; border-radius:10px; overflow:hidden; border:1px solid #262b35; background:#11141a; }
+  .flFill { position:absolute; left:0; top:0; bottom:0; width:0; transition: width .3s ease, background .3s ease; }
+  .flLabel { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; gap:8px; font-weight:800; font-size:15px; letter-spacing:.3px; color:#fff; text-shadow:0 1px 3px rgba(0,0,0,.55); z-index:2; }
+
   .vault { display:flex; align-items:center; gap:16px; background:#11141a; border:1px solid #262b35; border-radius:12px; padding:16px; transition: border-color .25s; }
   .lock { font-size: 38px; transition: transform .25s; }
   .vaultText { font-size: 14px; line-height: 1.45; }
@@ -107,6 +111,9 @@
 
   .footer { margin-top:24px; font-size:13px; color:#6b7280; line-height:1.55; }
   .footer b { color:#aeb4c0; }
+
+  .disclaimer { margin-top:14px; background:#0f1216; border:1px solid #21262f; border-radius:8px; padding:12px 14px; font-size:11.5px; color:#7a818d; line-height:1.5; font-style:italic; }
+  .disclaimer b { color:#9aa1ac; font-style:normal; }
 
   .attrib { margin-top:18px; padding-top:14px; border-top:1px solid #262b35; font-size:10px; color:#5a606b; line-height:1.4; text-align:center; }
 </style>
@@ -191,10 +198,10 @@
     <div class="arrowNote">↓ which sets your fat-burning ↓</div>
 
     <div class="section">
-      <div class="secTitle">What you're burning right now</div>
-      <div class="mix">
-        <div class="sugar" id="sugarBar">Sugar</div>
-        <div class="fat" id="fatBar">Fat</div>
+      <div class="secTitle">Can you lose fat right now?</div>
+      <div class="flbar">
+        <div class="flFill" id="flFill"></div>
+        <div class="flLabel" id="flLabel">FAT LOSS: BLOCKED</div>
       </div>
     </div>
 
@@ -211,6 +218,8 @@
     <div class="footer">
       <b>The takeaway:</b> stress, estrogen swings, and how you eat all push insulin up. When insulin stays high all day, the vault stays locked &mdash; so you can be eating less and <b>still</b> not burning your fat. Calm any of the three levers and insulin drops, the vault opens, and fat-burning turns back on.
     </div>
+
+    <div class="disclaimer">This is a deliberately <b>crude representation of a very complex system</b>. It isn&rsquo;t a literal model of how the body processes macronutrients &mdash; it&rsquo;s built to characterize the core mechanics of <b>insulin relative to fat-burning</b>, so the relationship is easy to feel and understand.</div>
 
     <div class="attrib">Based on And/Life&rsquo;s proprietary fat-burning concept. Shared as a learning aid &mdash; not for sale or commercial use.</div>
   </div>
@@ -234,8 +243,8 @@
   const shutterL = document.getElementById('shutterL');
   const shutterR = document.getElementById('shutterR');
   const windowLabel = document.getElementById('windowLabel');
-  const sugarBar = document.getElementById('sugarBar');
-  const fatBar = document.getElementById('fatBar');
+  const flFill = document.getElementById('flFill');
+  const flLabel = document.getElementById('flLabel');
   const lock = document.getElementById('lock');
   const vault = document.getElementById('vault');
   const vaultText = document.getElementById('vaultText');
@@ -294,22 +303,28 @@
     shutterR.style.width = close + '%';
     windowEl.style.borderColor = colorFor(w);
     windowLabel.style.color = colorFor(w);
-    windowLabel.textContent = w >= 60
-      ? 'Shut — insulin can\'t get in, so the body pumps out more'
-      : (w >= 33 ? 'Closing — insulin struggling to get in' : 'Open — insulin gets in easily, little is needed');
+    windowLabel.innerHTML = w >= 60
+      ? 'Shut — insulin can\'t get in, so your body floods out more. <b>High insulin all day = fat loss stays blocked.</b>'
+      : (w >= 33 ? 'Closing — insulin\'s struggling in, so more gets pumped out. <b>That creeping insulin keeps the fat-loss door shut.</b>' : 'Open — insulin gets in easily, so you need very little. <b>Low insulin = the fat-loss door can open.</b>');
     if (w >= 33) {
       cycleText.innerHTML = 'Drag it and watch the insulin meter jump. Worn receptors stop listening &mdash; so your body pumps out <b>even more</b> insulin for the same job. And high insulin is what <b>wears them out in the first place</b>: more insulin &rarr; more wear &rarr; more insulin. <b>That\'s why it snowballs over time.</b>';
     } else {
       cycleText.innerHTML = 'Receptors <b>healthy and listening</b> &mdash; it takes only a little insulin to do the job, so nothing snowballs. Years of high insulin are what slide this toward "worn out."';
     }
 
-    // fuel mix
-    const fatPct = Math.round(85 - (insulin / 100) * 75);
-    const sugarPct = 100 - fatPct;
-    sugarBar.style.width = sugarPct + '%';
-    fatBar.style.width = fatPct + '%';
-    sugarBar.textContent = 'Sugar ' + sugarPct + '%';
-    fatBar.textContent = 'Fat ' + fatPct + '%';
+    // fat-loss gate meter — openness is the inverse of insulin
+    const open = 100 - insulin;
+    flFill.style.width = open + '%';
+    if (insulin >= 55) {
+      flFill.style.background = '#ef4444';
+      flLabel.innerHTML = '🔒 FAT LOSS: BLOCKED';
+    } else if (insulin >= 33) {
+      flFill.style.background = '#fbbf24';
+      flLabel.innerHTML = '🔓 FAT LOSS: CRACKING OPEN';
+    } else {
+      flFill.style.background = '#2dd4bf';
+      flLabel.innerHTML = '✅ FAT LOSS: UNLOCKED';
+    }
 
     // vault + caption
     if (insulin >= 55) {
@@ -317,19 +332,19 @@
       vault.style.borderColor = '#ef4444';
       vaultText.innerHTML = '<b style="color:#fff">Vault LOCKED.</b> High insulin clamps your fat cells shut &mdash; your stored fat can\'t get out to be burned.';
       caption.style.borderLeftColor = '#ef4444';
-      caption.innerHTML = 'Insulin is <b>high</b>, so your body burns the <b>sugar</b> from your food and locks your fat away. You could eat less and still barely touch your fat.';
+      caption.innerHTML = 'Insulin is <b>high</b>, so your stored fat stays <b>locked away</b>. You could eat less and still barely touch it.';
     } else if (insulin >= 33) {
       lock.textContent = '🔓'; lock.style.transform = 'scale(1)';
       vault.style.borderColor = '#fbbf24';
       vaultText.innerHTML = '<b style="color:#fff">Vault half-open.</b> Insulin is easing off &mdash; some fat can start coming out.';
       caption.style.borderLeftColor = '#fbbf24';
-      caption.innerHTML = 'Insulin is <b>coming down</b>. The mix is shifting &mdash; less sugar-burning, more of your own fat getting used.';
+      caption.innerHTML = 'Insulin is <b>coming down</b>. The vault is easing open &mdash; some of your stored fat can start getting out.';
     } else {
       lock.textContent = '🔓'; lock.style.transform = 'scale(1.05)';
       vault.style.borderColor = '#2dd4bf';
       vaultText.innerHTML = '<b style="color:#fff">Vault OPEN.</b> Insulin is low &mdash; your fat flows out freely and your body burns it for fuel.';
       caption.style.borderLeftColor = '#2dd4bf';
-      caption.innerHTML = 'Insulin is <b>low</b> &mdash; your body opens the vault and runs mostly on <b>your own fat</b>. This is the state you want to spend time in.';
+      caption.innerHTML = 'Insulin is <b>low</b> &mdash; the vault opens and your stored fat is <b>free to be released and used</b>. This is the state you want to spend time in.';
     }
   }
 
