@@ -86,7 +86,11 @@
   .shutter { position:absolute; top:0; bottom:0; width:0; background:#23272f; z-index:2; transition:width .25s ease; }
   .shutter.left { left:0; border-right:2px solid #3a3f49; }
   .shutter.right { right:0; border-left:2px solid #3a3f49; }
-  .windowLabel { margin-top:8px; font-size:12px; font-weight:600; transition:color .25s; }
+  .windowLabel { margin-top:12px; font-size:13px; font-weight:500; line-height:1.5; text-align:left; color:#cdd2db; }
+  .windowLabel .wlLead { display:block; font-weight:700; margin-bottom:7px; transition:color .25s; }
+  .windowLabel .wlItem { display:block; margin:4px 0; }
+  .windowLabel .wlSum { display:block; margin-top:9px; font-style:italic; color:#9aa1ac; }
+  .windowLabel b.hl { color:#fff; font-style:normal; }
 
   .section { margin-bottom: 22px; }
   .mix { display: flex; height: 44px; border-radius: 10px; overflow: hidden; border: 1px solid #262b35; }
@@ -292,24 +296,44 @@
     insulinV.textContent = word(insulin, 'Low', 'Medium', 'High') + ' (' + insulin + ')';
     insulinV.style.color = colorFor(insulin);
 
-    // receptor wear label + the vicious-cycle note
-    wearV.textContent = word(w, 'Open', 'Half-shut', 'Shut');
-    wearV.style.color = colorFor(w);
-    cycleBox.style.borderColor = w >= 60 ? '#ef4444' : (w >= 33 ? '#fbbf24' : '#262b35');
+    // receptor state + the vicious-cycle note — now driven by INSULIN,
+    // so all three levers visibly wear the receptors and close the window
+    wearV.textContent = word(insulin, 'Open', 'Half-shut', 'Shut');
+    wearV.style.color = colorFor(insulin);
+    cycleBox.style.borderColor = insulin >= 60 ? '#ef4444' : (insulin >= 33 ? '#fbbf24' : '#262b35');
 
-    // the window: worn receptors = shutters close over the glass
-    const close = (w / 100) * 50; // each shutter covers up to half
+    // the window: the more insulin the 3 levers pump, the more the
+    // receptors wear -> the shutters close over the glass
+    const close = (insulin / 100) * 50; // each shutter covers up to half
     shutterL.style.width = close + '%';
     shutterR.style.width = close + '%';
-    windowEl.style.borderColor = colorFor(w);
-    windowLabel.style.color = colorFor(w);
-    windowLabel.innerHTML = w >= 60
-      ? 'Shut — insulin can\'t get in, so your body floods out more. <b>High insulin all day = fat loss stays blocked.</b>'
-      : (w >= 33 ? 'Closing — insulin\'s struggling in, so more gets pumped out. <b>That creeping insulin keeps the fat-loss door shut.</b>' : 'Open — insulin gets in easily, so you need very little. <b>Low insulin = the fat-loss door can open.</b>');
-    if (w >= 33) {
-      cycleText.innerHTML = 'Drag it and watch the insulin meter jump. Worn receptors stop listening &mdash; so your body pumps out <b>even more</b> insulin for the same job. And high insulin is what <b>wears them out in the first place</b>: more insulin &rarr; more wear &rarr; more insulin. <b>That\'s why it snowballs over time.</b>';
+    windowEl.style.borderColor = colorFor(insulin);
+    let wlLead, wl1, wl2, wlSum;
+    if (insulin >= 55) {
+      wlLead = 'Receptors are worn out, so your body is flooding out high insulin — and it&rsquo;s staying high all day.';
+      wl1 = '<b>1)</b> your muscles aren&rsquo;t taking in much glucose, so the leftover sugar <b class="hl">is being stored as fat</b>, and';
+      wl2 = '<b>2)</b> <b class="hl">fat-burning has switched off</b> — stored fat isn&rsquo;t being released to be burnt.';
+      wlSum = 'High insulin + worn receptors is how the body gets <b class="hl">stuck storing fat and can&rsquo;t release it</b> — you can eat less and barely move it.';
+    } else if (insulin >= 33) {
+      wlLead = 'Receptors are wearing, so it takes more insulin — and insulin is climbing.';
+      wl1 = '<b>1)</b> less glucose is getting into your muscles, so more <b class="hl">is being made available for fat storage</b>, and';
+      wl2 = '<b>2)</b> <b class="hl">fat-burning is switching off</b>.';
+      wlSum = 'Rising insulin + tiring receptors tips the body from fat-<b class="hl">burning</b> toward fat-<b class="hl">storing</b>.';
     } else {
-      cycleText.innerHTML = 'Receptors <b>healthy and listening</b> &mdash; it takes only a little insulin to do the job, so nothing snowballs. Years of high insulin are what slide this toward "worn out."';
+      wlLead = 'Receptors are healthy and responsive, so insulin stays low and glucose moves into your muscles easily.';
+      wl1 = '<b>1)</b> the sugar <b class="hl">is being used instead of stored as fat</b>, and';
+      wl2 = '<b>2)</b> with insulin low, <b class="hl">fat-burning has switched on</b> and stored fat is being burnt.';
+      wlSum = 'Low insulin + healthy receptors is how a <b class="hl">lean, efficient, fat-burning body</b> loses weight and keeps it off.';
+    }
+    windowLabel.innerHTML =
+      '<span class="wlLead" style="color:' + colorFor(insulin) + '">' + wlLead + '</span>' +
+      '<span class="wlItem">' + wl1 + '</span>' +
+      '<span class="wlItem">' + wl2 + '</span>' +
+      '<span class="wlSum">' + wlSum + '</span>';
+    if (insulin >= 33) {
+      cycleText.innerHTML = 'The more insulin your three levers pump out, the more your receptors <b>wear down</b> &mdash; they stop listening, so your body pumps out <b>even more</b> insulin for the same job: more insulin &rarr; more wear &rarr; more insulin. And here&rsquo;s the kicker &mdash; when worn receptors won&rsquo;t let glucose into your muscles, <b>that sugar has nowhere to go, so your body stores the leftover as fat.</b> That&rsquo;s why it snowballs over time.';
+    } else {
+      cycleText.innerHTML = 'Receptors <b>healthy and listening</b> &mdash; a little insulin gets glucose into your muscles, so nothing is left over to store as fat. Years of high insulin from the three levers are what slide this toward "worn out."';
     }
 
     // fat-loss gate meter — openness is the inverse of insulin
